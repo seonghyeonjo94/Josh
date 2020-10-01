@@ -10,10 +10,10 @@ def transpose_to_date(x):
     x = pd.Timestamp(x)
     return x
 
-ticker = get_KOR_ticker()
+ticker = KOR_ticker_cleansing()
 ticker['시가총액'] = ticker['시가총액'].apply(transpose_to_numeric)
 
-prices = pd.read_csv(r'C:\Users\a\Downloads\quant\Python\data\price.csv')
+prices = pd.read_csv(r'C:\Users\USER\Downloads\quant\Python\data\price.csv')
 prices['Unnamed: 0'] = prices['Unnamed: 0'].apply(transpose_to_date)
 prices.index = prices['Unnamed: 0']
 del prices['Unnamed: 0']
@@ -253,7 +253,6 @@ rank = pd.concat(rank)
 
 rankic = RankIC(rets_monthly,rank)
 rankic.mean()
-rankic.mean() / (rankic.std()/np.sqrt(len(rankic)))
 
 rolling = list()
 

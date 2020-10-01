@@ -19,3 +19,4 @@ from scipy.optimize import minimize
 import empyrical as ep
 import seaborn as sns
 import yahoo_fin.stock_info as si
+from selenium import webdriver
