@@ -133,6 +133,116 @@ def get_KOR_fs():
         pickle.dump(total_fs, f)
     return total_fs
 
+def get_KOR_value():
+    """
+    Download Financial statements.
+    ticker Downloaded from http://marketdata.krx.co.kr/mdi#document=040402
+
+    Returns
+    -------
+    total_fs : pickle
+        All Financial statements listed in KRX.
+
+    """
+    ticker = get_KOR_ticker()
+    ticker = ticker[['종목코드', '종목명']]
+    
+    total_value = {}
+    for num, code in enumerate(ticker['종목코드']):
+        try:
+            print(num, code)
+            time.sleep(1)
+            try:
+                value_url = 'http://comp.fnguide.com/SVO2/ASP/SVD_Invest.asp?pGB=1&gicode=A' + code
+                value_page = requests.get(value_url)
+                value_tables = pd.read_html(value_page.text)
+            
+                temp = value_tables[1].iloc[9:]
+                for i in range(len(temp.index)):
+                    temp[temp.columns[0]].iloc[i] = temp[temp.columns[0]].iloc[i].replace('계산에 참여한 계정 펼치기','')
+                temp = temp.set_index(temp.columns[0])
+                temp = temp.drop(index='Multiples')
+                temp = temp.drop(index='FCF')
+            
+        
+            except requests.exceptions.Timeout:
+                time.sleep(60)
+                value_url = 'http://comp.fnguide.com/SVO2/ASP/SVD_Invest.asp?pGB=1&gicode=A' + code
+                value_page = requests.get(value_url)
+                value_tables = pd.read_html(value_page.text)
+            
+                temp = value_tables[1].iloc[9:]
+                for i in range(len(temp.index)):
+                    temp[temp.columns[0]].iloc[i] = temp[temp.columns[0]].iloc[i].replace('계산에 참여한 계정 펼치기','')
+                temp = temp.set_index(temp.columns[0])
+                temp = temp.drop(index='Multiples')
+                temp = temp.drop(index='FCF')
+            total_value[code] = temp
+        except ValueError:
+            continue
+        except KeyError:
+            continue
+    with open(r'C:\Users\Samsung\Downloads\quant\Python\data\value.pickle', 'wb') as f:
+        pickle.dump(total_value, f)
+    return total_value
+
+def get_KOR_ratio():
+    """
+    Download Financial statements.
+    ticker Downloaded from http://marketdata.krx.co.kr/mdi#document=040402
+
+    Returns
+    -------
+    total_fs : pickle
+        All Financial statements listed in KRX.
+
+    """
+    ticker = get_KOR_ticker()
+    ticker = ticker[['종목코드', '종목명']]
+    
+    total_ratio = {}
+    for num, code in enumerate(ticker['종목코드']):
+        try:
+            print(num, code)
+            time.sleep(1)
+            try:
+                ratio_url = 'http://comp.fnguide.com/SVO2/ASP/SVD_FinanceRatio.asp?pGB=1&gicode=A' + code
+                ratio_page = requests.get(ratio_url)
+                ratio_tables = pd.read_html(ratio_page.text)
+            
+                temp = ratio_tables[0]
+                for i in range(len(temp.index)):
+                    temp[temp.columns[0]].iloc[i] = temp[temp.columns[0]].iloc[i].replace('계산에 참여한 계정 펼치기','')
+                temp = temp.set_index(temp.columns[0])
+                temp = temp.drop(index='안정성비율')
+                temp = temp.drop(index='성장성비율')
+                temp = temp.drop(index='수익성비율')
+                temp = temp.drop(index='활동성비율')
+            
+        
+            except requests.exceptions.Timeout:
+                time.sleep(60)
+                ratio_url = 'http://comp.fnguide.com/SVO2/ASP/SVD_FinanceRatio.asp?pGB=1&gicode=A' + code
+                ratio_page = requests.get(ratio_url)
+                ratio_tables = pd.read_html(ratio_page.text)
+            
+                temp = ratio_tables[0]
+                for i in range(len(temp.index)):
+                    temp[temp.columns[0]].iloc[i] = temp[temp.columns[0]].iloc[i].replace('계산에 참여한 계정 펼치기','')
+                temp = temp.set_index(temp.columns[0])
+                temp = temp.drop(index='안정성비율')
+                temp = temp.drop(index='성장성비율')
+                temp = temp.drop(index='수익성비율')
+                temp = temp.drop(index='활동성비율')
+            total_ratio[code] = temp
+        except ValueError:
+            continue
+        except KeyError:
+            continue
+    with open(r'C:\Users\Samsung\Downloads\quant\Python\data\ratio.pickle', 'wb') as f:
+        pickle.dump(total_ratio, f)
+    return total_ratio
+
 def get_KOR_price():    
     """
     Download Korea stock prices.
