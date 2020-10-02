@@ -14,20 +14,20 @@ prices = prices.fillna(method = 'ffill')
 rets = prices.pct_change(1)
 
 
-# Basic Option
+#--- Basic Option ---#
 
 fee = 0.0030
 lookback = 12
 num = 5
 
 
-# Find Endpoints of Month
+#--- Find Endpoints of Month ---#
 
 s = pd.Series(np.arange(prices.shape[0]), index=prices.index)
 ep = s.resample("M").max()
 
 
-# Create Weight Matrix using 12M Momentum
+#--- Create Weight Matrix using 12M Momentum ---#
 
 wts = list()
 
@@ -46,7 +46,7 @@ for i in range(lookback, len(ep)) :
 wts = pd.concat(wts)
 
 
-# Calculate Portfolio Return & Turnover
+#--- Calculate Portfolio Return & Turnover ---#
     
 result = ReturnPortfolio(rets, wts)
 
@@ -55,28 +55,28 @@ turnover = pd.DataFrame((result['eop_weights'].shift(1) - result['bop_weights'])
 portfolio_ret_net = portfolio_ret - (turnover * fee)     
 
 
-# Calculate Cumulative Return
+#--- Calculate Cumulative Return ---#
 
 port_cumret = ReturnCumulative(portfolio_ret_net)
 
 
-# Calculate Drawdown
+#--- Calculate Drawdown ---#
     
 port_dd = drawdown(portfolio_ret_net)
 
 
-# Graph: Portfolio Return and Drawdown
+#--- Graph: Portfolio Return and Drawdown ---#
 
 fig, axes = plt.subplots(2, 1)
 port_cumret.plot(ax = axes[0], legend = None)
 port_dd.plot(ax = axes[1], legend = None)
 
 
-# Daily Return Frequency To Yearly Return Frequency
+#--- Daily Return Frequency To Yearly Return Frequency ---#
 
 yr_ret = apply_yearly(portfolio_ret_net)
 yr_ret.plot(kind = 'bar')
 
-# Calculate Portfolio Stats
+#--- Calculate Portfolio Stats ---#
 
 ReturnStats(portfolio_ret_net)

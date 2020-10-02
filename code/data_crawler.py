@@ -19,6 +19,7 @@ from scipy.optimize import minimize
 import empyrical as ep
 import seaborn as sns
 import yahoo_fin.stock_info as si
+from selenium import webdriver
 
 def get_KOR_ticker():
     
@@ -26,7 +27,20 @@ def get_KOR_ticker():
         x = str(x)
         return '0' * (6-len(x)) + x
     
-    path = r'C:\Users\a\Downloads\data.csv'
+    def make_numeric(x):
+        x = x.replace(',', '')
+        x = pd.to_numeric(x)
+        return x
+
+    url="http://marketdata.krx.co.kr/mdi#document=040402"
+    driver=webdriver.Chrome('chromedriver')
+    driver.get(url)
+    selector = driver.find_element_by_xpath('//*[@id="c9f0f895fb98ab9159f51fd0297e236d"]/button[4]')
+    selector.click()
+
+    time.sleep(15)
+    
+    path = r'C:\Users\Samsung\Downloads\data.csv'
     data = pd.read_csv(path)
 
     K = list()
@@ -39,7 +53,8 @@ def get_KOR_ticker():
     data = data.iloc[K]
     data.index = range(len(data))
     data['종목코드'] = data['종목코드'].apply(make_code_price)
-    data.to_csv(r'C:\Users\a\Downloads\quant\Python\data\ticker.csv')
+    data['시가총액'] = data['시가총액'].apply(make_numeric)
+    data.to_csv(r'C:\Users\Samsung\Downloads\quant\Python\data\ticker.csv')
     return data
 
 def get_KOR_fs():
@@ -114,7 +129,7 @@ def get_KOR_fs():
             continue
         except KeyError:
             continue
-    with open(r'C:\Users\a\Downloads\quant\Python\data\fs.pickle', 'wb') as f:
+    with open(r'C:\Users\Samsung\Downloads\quant\Python\data\fs.pickle', 'wb') as f:
         pickle.dump(total_fs, f)
     return total_fs
 
@@ -134,8 +149,8 @@ def get_KOR_price():
 
     folder = "KOR_price/"
 
-    if not os.path.isdir(r'C:\Users\a\Downloads\quant\Python\data' + '\\' + folder):
-        os.mkdir(r'C:\Users\a\Downloads\quant\Python\data' + '\\' + folder)
+    if not os.path.isdir(r'C:\Users\Samsung\Downloads\quant\Python\data' + '\\' + folder):
+        os.mkdir(r'C:\Users\Samsung\Downloads\quant\Python\data' + '\\' + folder)
         
     for num, code in enumerate(ticker['종목코드']):
         try:
@@ -175,7 +190,7 @@ def get_KOR_price():
                     price_list.append(datas[4])
                     price_df = pd.DataFrame({code:price_list}, index=date_list)
                     price_df.index = pd.to_datetime(price_df.index)
-                price_df.to_csv(r'C:\Users\a\Downloads\quant\Python\data\\' + folder + code + '.csv')
+                price_df.to_csv(r'C:\Users\Samsung\Downloads\quant\Python\data\\' + folder + code + '.csv')
             if num == 0 :
                 total_price = price_df
             else:
@@ -185,67 +200,49 @@ def get_KOR_price():
         except KeyError:
             continue
     total_price.index = pd.to_datetime(total_price.index)
-    total_price.to_csv(r'C:\Users\a\Downloads\quant\Python\data\price.csv')
+    total_price.to_csv(r'C:\Users\Samsung\Downloads\quant\Python\data\price.csv')
     return total_price
 
-def get_KOR_index(ticker, start_date, end_date):
+def get_KOR_index(ticker):
     """
     Download Korea Factor Index.
-    Data Download from http://www.wiseindex.com
+    Data Download from http://www.fnindex.co.kr
 
     Parameters
     ----------
     ticker : str
-        Factor index ticker.
-    start_date : str
-        example : '2000-01-01'.
-    end_date : str
-        example : '2000-05-15'.
+        Factor Index Ticker.
 
     Returns
     -------
     pd.DataFrame
         Factor index prices.
-        
+
     Examples
     -------
-    start_date = '2000-01-01'
-    end_date = '2020-05-15'
     all_data = {}
-    ticker = ['WSI0601', 'WSI0602', 'WSI0603', 'WSI0604']
+    ticker = ['HTQ', 'HTV', 'HTM', 'HTL']
     name = ['Quality', 'Value', 'Momentum', 'Lowvol']
 
     for name, tic in zip(name, ticker):
-        all_data[name] = get_KOR_index(tic, start_date, end_date)
+        all_data[name] = get_KOR_index(tic)
 
     prices = pd.DataFrame({tic: data['Price'] for tic, data in all_data.items()})
-
     """
-    
-    def transpose_to_date(x):
-        x = pd.Timestamp(x, unit='ms') + pd.DateOffset(days=1)
+    def cleansing(x):
+        x = x.replace('.', '')
+        x = pd.Timestamp(x)
         return x
-
-    def transpose_to_int(x):
-        temp = re.search(r'\d+', x)
-        return int(temp.group())
     
-    url = 'http://www.wiseindex.com/DataCenter/GridData?currentPage=1&endDT=' + end_date + '&fromDT=' + start_date + '&index_ids=' + ticker + '&isEnd=1&itemType=1&perPage=10000&term=1'
+    url = 'http://www.fnindex.co.kr/api/realtime/line/FI00.WLT.' + ticker +'/10Y?_=1601542070322'
     html = requests.get(url)
-
     data = json.loads(html.text)
-    data = pd.DataFrame(data)
-
-    columns = ['Date', 'Price', 'Cap', 'Volume']
-    data = data[['TRD_DT', 'IDX1_VAL1', 'IDX1_VAL2', 'IDX1_VAL3']]
-    data.columns = columns
+    data = pd.DataFrame(data['OUT_CURSOR'])
     
-    data['Date'] = data['Date'].apply(transpose_to_int)
-    data['Date'] = data['Date'].apply(transpose_to_date)
-
-    data = data.sort_values(by="Date", ascending=True)
-    data.index = data['Date']
-    data = data.drop('Date', axis=1)
+    columns = ['Date', 'Price']
+    data.columns = columns
+    data['Date'] = data['Date'].apply(cleansing)
+    data = data.set_index('Date')
     
     return data
 
@@ -271,7 +268,7 @@ def get_US_ETF_ticker():
     
     ticker = tables[0]
     ticker = ticker[['Name', 'Symbol', 'Vol.']]
-    ticker.to_csv(r'C:\Users\a\Downloads\quant\Python\data\US_ETF_ticker.csv')
+    ticker.to_csv(r'C:\Users\Samsung\Downloads\quant\Python\data\US_ETF_ticker.csv')
     return ticker
 
 def get_US_ETF_price(start_date, end_date):
@@ -292,7 +289,7 @@ def get_US_ETF_price(start_date, end_date):
         ETF prices from start_date to end_date.
 
     """
-    path = r'C:\Users\a\Downloads\quant\Python\data\US_ETF_ticker.csv'
+    path = r'C:\Users\Samsung\Downloads\quant\Python\data\US_ETF_ticker.csv'
     data = pd.read_csv(path)
     data = data[['Name', 'Symbol']]
     
@@ -316,7 +313,7 @@ def get_US_ETF_price(start_date, end_date):
             continue
         except KeyError:
             continue
-    total_df.to_csv(r'C:\Users\a\Downloads\quant\Python\data\US_ETF_price.csv')
+    total_df.to_csv(r'C:\Users\Samsung\Downloads\quant\Python\data\US_ETF_price.csv')
     return total_df
 
 def get_US_price(start_date, end_date):
@@ -366,5 +363,5 @@ def get_US_price(start_date, end_date):
             continue
         except KeyError:
             continue
-    total_df.to_csv(r'C:\Users\a\Downloads\quant\Python\data\US_price.csv')
+    total_df.to_csv(r'C:\Users\Samsung\Downloads\quant\Python\data\US_price.csv')
     return total_df
