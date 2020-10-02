@@ -13,7 +13,17 @@ get_KOR_price()
 
 prices = get_US_price('2000-1-1', '2020-8-10')
 
+ticker = pd.read_csv(r'C:\Users\Samsung\Downloads\quant\Python\data\ticker.csv')
+def make_ticker(x):
+    x = str(x)
+    return '0' * (6-len(x)) + x
+ticker['종목코드'] = ticker['종목코드'].apply(make_ticker)
+ticker = ticker.set_index('종목코드')
+ticker = ticker[ticker.columns[2:]]
+
 fs = pd.read_pickle(r'C:\Users\Samsung\Downloads\quant\Python\data\fs.pickle')
+value = pd.read_pickle(r'C:\Users\Samsung\Downloads\quant\Python\data\value.pickle')
+ratio = pd.read_pickle(r'C:\Users\Samsung\Downloads\quant\Python\data\ratio.pickle')
 
 ticker = list(fs.keys())
 

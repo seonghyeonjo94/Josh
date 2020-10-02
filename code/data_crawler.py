@@ -23,7 +23,7 @@ from selenium import webdriver
 
 def get_KOR_ticker():
     
-    def make_code_price(x):
+    def make_ticker(x):
         x = str(x)
         return '0' * (6-len(x)) + x
     
@@ -52,7 +52,7 @@ def get_KOR_ticker():
                          (re.search('\w+\d', data['종목명'][i]) == None)) 
     data = data.iloc[K]
     data.index = range(len(data))
-    data['종목코드'] = data['종목코드'].apply(make_code_price)
+    data['종목코드'] = data['종목코드'].apply(make_ticker)
     data['시가총액'] = data['시가총액'].apply(make_numeric)
     data.to_csv(r'C:\Users\Samsung\Downloads\quant\Python\data\ticker.csv')
     return data
@@ -282,7 +282,7 @@ def get_KOR_price():
                     price_list.append(datas[4])
                     price_df = pd.DataFrame({code:price_list}, index=date_list)
                     price_df.index = pd.to_datetime(price_df.index)
-                price_df.to_csv(r'C:\Users\a\Downloads\quant\Python\data\\' + folder + code + '.csv')
+                price_df.to_csv(r'C:\Users\Samsung\Downloads\quant\Python\data\\' + folder + code + '.csv')
             except requests.exceptions.Timeout:
                 time.sleep(60)
                 url = 'https://fchart.stock.naver.com/sise.nhn?requestType=0'
